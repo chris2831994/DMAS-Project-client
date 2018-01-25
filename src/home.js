@@ -10,7 +10,8 @@ export class Home {
     configureRouter(config, router){
         config.map([
             {route:['', 'home'], name:'tweet', moduleId:'viewmodels/tweet/tweet', nav:true, title:'Your Timeline'},
-            {route:'logout', name:'logout', moduleId:'viewmodels/logout/logout', nav:true, title:'Logout'}
+            {route:'globalTimeline', name:'globalTimeline', moduleId:'viewmodels/globalTimeline/globalTimeline', nav:true, title:'Global Timeline'},
+            {route:'logout', name:'logout', moduleId:'viewmodels/logout/logout', nav:true, title:'Logout'}           
         ]);
         this.router = router;
 

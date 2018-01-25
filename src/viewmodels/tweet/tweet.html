@@ -1,6 +1,6 @@
 <template>
        
-  <form submit.trigger="postTweet()" class="ui form stacked segment">
+  <form submit.trigger="postTweet()" class="ui form raised segment">
 
       <div class='field'>
           <label>Tweet to all your friends:</label>
@@ -9,26 +9,30 @@
       <button class="ui blue submit button">Tweet</button>
   </form>
 
-  <section class='ui raised segment'>
-      <div class='ui divided items'>
-          <div repeat.for="tweet of tweets" class="item">
-              <div class='ui tiny image'>
-                  <img src='${tweet.author.profileImage}'>        
-              </div>
-              <div class='content'>
-                  <div class="header">                                                               
-                      <label>
-                          ${ tweet.author.firstName } ${ tweet.author.lastName }                                     
-                      </label>                            
-                  <div class="meta">@${ tweet.author.userName } | ${ tweet.formattedDate }</div>
-                  <div class="description"><p>${ tweet.text }</p></div>    
-                  <div class="extra">
-                      <div class="ui large bordered image">
-                          <img src="${ tweet.postedImage }">
-                      </div>
-                  </div> 
-              </div>
-          </div>
-      </div>
-  </section>
+  <form submit.trigger="deleteTweet()" class="ui form raised segment">            
+    <label>Your latest Tweets:</label>
+    <button type="submit" class="ui submit button">Delete Selected</button>
+    <div class='ui divided items'>
+        <div repeat.for="tweet of tweets" class="item">
+            <div class='ui tiny image'>
+                <img src='${tweet.author.profileImage}'>        
+            </div>
+            <div class='content'>
+                <div class="header">
+                    <input type="radio" name="tweets" model.bind="tweet" checked.bind="$parent.selectedOption">                                                                
+                    <label>
+                        ${ tweet.author.firstName } ${ tweet.author.lastName }                                     
+                    </label>
+                </div>                            
+                <div class="meta">@${ tweet.author.userName } | ${ tweet.formattedDate }</div>
+                <div class="description"><p>${ tweet.text }</p></div>    
+                <div class="extra">
+                    <div class="ui medium bordered image">
+                        <img src="${tweet.postedImage}">
+                    </div>                
+                </div> 
+            </div>
+        </div>
+    </div>                               
+  </form> 
 </template>

@@ -2,17 +2,39 @@ import {inject} from 'aurelia-framework';
 import Fixtures from './fixtures';
 import {LoginStatus} from './messages';
 import {EventAggregator} from 'aurelia-event-aggregator';
+import AsyncHttpClient from './async-http-client';
 
-@inject(Fixtures, EventAggregator)
+@inject(Fixtures, EventAggregator, AsyncHttpClient)
 export default class TweetService{
     
     users = [];
     tweets = [];
+    userTweets = [];
+    loggedInUser = null;
 
-    constructor(data, ea){
-        this.users = data.users;
-        this.tweets = data.tweets;
+    constructor(data, ea, ac){
         this.ea = ea;
+        this.ac = ac;
+        this.getTweets();
+        this.getUsers();
+    }
+
+    getTweets(){
+        this.ac.get('/api/tweets').then(res => {
+            this.tweets = res.content;
+        });
+    }
+
+    getUsers(){
+        this.ac.get('/api/users').then(res => {
+            this.users = res.content;
+        });
+    }
+
+    getUserTweets(){
+        this.ac.get('/api/tweetsUser/' + this.loggedInUser._id).then(res=> {
+            this.userTweets = res.content;
+        });
     }
 
     login(email, password){
@@ -20,16 +42,14 @@ export default class TweetService{
             success: false,
             message: ''
         };
-
-        if(this.users[email]){
-            if(this.users[email].password === password) {
+        
+        for(let user of this.users){
+            if(user.email === email && user.password === password){
                 status.success = true;
                 status.message = 'logged in';
-            } else {
-                status.message = 'Incorrect password';
-            } 
-        } else {
-            status.message = 'Unknown user';
+                this.loggedInUser = user;
+                this.getUserTweets();
+            }
         }
         this.ea.publish(new LoginStatus(status));
     }
@@ -39,24 +59,40 @@ export default class TweetService{
             firstName: firstName,
             lastName: lastName,
             userName: userName,
-            description: "This is a profile description",
+            description: "Hi, I'm new to Tweets and this is my profile",
             email: email,
             password: password,
             profileImage: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAyCAIAAAClJN76AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QwTETULvpeljgAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAANJSURBVFjD7ZffShtBFMZnZnfdmARNoDQQ+yc10VqwjVChhWqU+ARC9LYXfahCX0Bv1CuxRFFBLVWSgjUaDQ01MVHBGOIqm83OzkwvpKHGZKPJbhXac7ews7/5vjl75hz48dMpuLtA4E6Db2CNJFFCQCqt2Wzo+Ji43VwuR10PkcfDm4jPZMnhIYlE1Nwpubhg11/wPOX7+1vcbu5RB2ckPn1AYjH1+xYuFCilNV/bT2npA83hQK9eCr29LU8ec83ii0X2I6ktLyuHR4SQ+hulFOTzdGW1lExqw8MWn5dvbYUNpl6xyCJRdWpaPsjciF0OQsBBhkxNy5GoWiyyRtQXi2x1rbS0XNI01lhWyzKb+6woCht4J9byoKb69Q11cUlpmH0ZmsYWl5T1DfV25kejanheuZXhOgcRnleiUfWmeEmi4YVmdVd4EF5QJIneCD87pxQK1NjqVijQ2TmlPj6TJYkEZsxYOmAMJBI4kyV18PE4lmWj4b9/hHgc18HHto2XXjYgtq2LlySaz1NgWuTztCIBr+LPGcbMPDzGTDpneuqpieIBpUBPvSF1pm4V0sEz8/HsHjVbV/D6d7MhUYG4gnc4TDejAnHlwelAFtFEAywidOrgBQE20K3ePDweXhBqmw8h6PMLyJwTQAj0+QUIdWu+z8e7XJwZeJeL8/n4OleO3Y5GghbDDUAIjAQtdjuqg0cIdHfxXq/BGeD18t1d/HVVVWSKIhwPWQ38BSwiHA9ZxWofrIKHELS1oWDQAo3YAIQgGLS0taGqX0O11gwFRG+nAUfg7eSHAmItJUhn12Mhq83WlAM2GxwLWXVc1EtxpxMFBsVm8IFB0elEjc94qVRTLUAqRfRnvJr4dFqbmpb3ErgZ/F4CT03L6bR2ixGTEPBzX5uZkXOntMmulxCwFcNHR2R01PrMw3NcPfWEgJ04npiUT3LUkI6bMXCSoxOT8k4cX2/m+D/7wLMzurJa+rquGjjgXcb5OZ2YlN++aRkcENvbUbn88Zcb3N3Dm5s4vosVhZk0ZmgaW/tSin5TX/QIfr/Q81yAEMD3Hw4jUZzNan+hzS0Hx4GODr7/tQDbHyRN7e31r0F0V+zLbLtPjfZ//H/8P4P/BaUljmJ8GjTRAAAAAElFTkSuQmCC",
             follows: []
         }
-        this.users[email] = newUser;
+
+        this.ac.post('/api/users', newUser).then(res => {
+            this.getUsers();
+        });
     }
 
-    postTweet(text, user){
+    postTweet(text){
+        let date = new Date();
+        let formattedDate = date.toDateString();
         let tweet = {
-            author: user,
+            author: null,
             text: text,
-            date: "asd",
-            formattedDate: "asdfasd"
+            date: date,
+            formattedDate: formattedDate,
+            postedImage: ""
         };
-        this.tweets.push(tweet);
-        console.log("tweeted message" + text);
+
+        this.ac.post('/api/tweets', {tweet: tweet, user: this.loggedInUser}).then(res => {
+            const returnedTweet = res.content;
+            this.tweets.push(returnedTweet);
+        });
+    }
+
+    deleteTweet(id){
+        this.ac.delete('/api/tweets/' + id).then(res => {
+            this.getTweets();
+            this.getUserTweets();
+        });
     }
 
     logout(){
@@ -64,6 +100,8 @@ export default class TweetService{
             success: false,
             message: ''
         };
+        this.loggedInUser = null;
+        this.userTweets = null;
         this.ea.publish(new LoginStatus(status));
     }
       

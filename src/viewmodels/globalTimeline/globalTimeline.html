@@ -1,0 +1,24 @@
+<template>
+    <section class='ui raised segment'>
+        <div class='ui divided items'>
+            <div repeat.for="tweet of tweets" class="item">
+                <div class='ui tiny image'>
+                    <img src='${tweet.author.profileImage}'>        
+                </div>
+                <div class='content'>
+                    <div class="header">                                                               
+                        <label>
+                            ${ tweet.author.firstName } ${ tweet.author.lastName }                                     
+                        </label>                            
+                    <div class="meta">@${ tweet.author.userName } | ${ tweet.formattedDate }</div>
+                    <div class="description"><p>${ tweet.text }</p></div>    
+                    <div class="extra">
+                        <div class="ui large bordered image">
+                            <img src="${ tweet.postedImage }">
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
