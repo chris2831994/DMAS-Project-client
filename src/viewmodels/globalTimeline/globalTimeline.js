@@ -1,14 +1,20 @@
 import {inject} from "aurelia-framework";
 import TweetService from '../../services/tweet-service';
+import {AllTweetsReady} from '../../services/messages';
+import {EventAggregator} from 'aurelia-event-aggregator';
 
-@inject(TweetService)
+@inject(TweetService, EventAggregator)
 export class GlobalTimeline {
 
     tweets = [];
 
-    constructor(ts) {
+    constructor(ts, ea) { 
         this.tweetService = ts;
-        this.tweets = ts.tweets;
+        ts.getTweets();
+        ea.subscribe(AllTweetsReady, msg => {
+            this.tweets = msg.tweets;
+        });     
+        
     }
 
 }

@@ -1,19 +1,28 @@
 import {inject} from "aurelia-framework";
 import TweetService from '../../services/tweet-service';
+import {UserTweetsReady} from '../../services/messages';
+import {EventAggregator} from 'aurelia-event-aggregator';
 
-@inject(TweetService)
+@inject(TweetService, EventAggregator)
 export class Tweet {
 
     text = "Hello World";
     tweets = [];
     user = null;
-    selectedOption = {};
+    selectedOption = null;
 
-    constructor(ts) {
+    constructor(ts, ea) { 
         this.tweetService = ts;
-        this.tweets = ts.userTweets;
-        this.user = ts.user;
-        this.selectedOption = this.tweets[0];
+        this.user = ts.loggedInUser;  
+        ts.getUserTweets();
+        ea.subscribe(UserTweetsReady, msg => {
+          this.tweets = msg.tweets;
+          if(this.tweets.length > 0)
+            this.selectedOption = this.tweets[0];
+        });
+        
+                        
+        
     }
 
     postTweet() {
@@ -22,7 +31,7 @@ export class Tweet {
 
     deleteTweet(){
       this.tweetService.deleteTweet(this.selectedOption._id);
-      this.tweets = this.deleteTweettweetService.userTweets;
-      this.selectedOption = this.tweets[0];
+      if(this.tweets.length > 0)
+        this.selectedOption = this.tweets[0];
     }
   }

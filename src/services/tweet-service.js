@@ -1,40 +1,47 @@
 import {inject} from 'aurelia-framework';
 import Fixtures from './fixtures';
-import {LoginStatus} from './messages';
+import {LoginStatus, AllTweetsReady, UserTweetsReady} from './messages';
 import {EventAggregator} from 'aurelia-event-aggregator';
 import AsyncHttpClient from './async-http-client';
 
-@inject(Fixtures, EventAggregator, AsyncHttpClient)
+@inject(EventAggregator, AsyncHttpClient)
 export default class TweetService{
     
     users = [];
-    tweets = [];
-    userTweets = [];
     loggedInUser = null;
 
-    constructor(data, ea, ac){
+    constructor(ea, ac){
         this.ea = ea;
         this.ac = ac;
-        this.getTweets();
         this.getUsers();
     }
 
     getTweets(){
+
         this.ac.get('/api/tweets').then(res => {
-            this.tweets = res.content;
+            this.ea.publish(new AllTweetsReady(res.content));
+        }).catch(err=>{
         });
+
     }
 
     getUsers(){
+
         this.ac.get('/api/users').then(res => {
             this.users = res.content;
+            
+        }).catch(err=>{
         });
+
     }
 
     getUserTweets(){
-        this.ac.get('/api/tweetsUser/' + this.loggedInUser._id).then(res=> {
-            this.userTweets = res.content;
+
+        this.ac.get('/api/tweetsUser/' + this.loggedInUser._id).then(res => {
+            this.ea.publish(new UserTweetsReady(res.content));
+        }).catch(err =>{
         });
+
     }
 
     login(email, password){
@@ -45,10 +52,11 @@ export default class TweetService{
         
         for(let user of this.users){
             if(user.email === email && user.password === password){
-                status.success = true;
-                status.message = 'logged in';
                 this.loggedInUser = user;
                 this.getUserTweets();
+                status.success = true;
+                status.message = 'logged in';              
+                break;
             }
         }
         this.ea.publish(new LoginStatus(status));
@@ -68,6 +76,7 @@ export default class TweetService{
 
         this.ac.post('/api/users', newUser).then(res => {
             this.getUsers();
+        }).catch(err=>{
         });
     }
 
@@ -84,7 +93,9 @@ export default class TweetService{
 
         this.ac.post('/api/tweets', {tweet: tweet, user: this.loggedInUser}).then(res => {
             const returnedTweet = res.content;
-            this.tweets.push(returnedTweet);
+            this.getTweets();
+            this.getUserTweets();
+        }).catch(err=>{
         });
     }
 
@@ -92,6 +103,7 @@ export default class TweetService{
         this.ac.delete('/api/tweets/' + id).then(res => {
             this.getTweets();
             this.getUserTweets();
+        }).catch(err=>{
         });
     }
 
@@ -100,8 +112,7 @@ export default class TweetService{
             success: false,
             message: ''
         };
-        this.loggedInUser = null;
-        this.userTweets = null;
+
         this.ea.publish(new LoginStatus(status));
     }
       

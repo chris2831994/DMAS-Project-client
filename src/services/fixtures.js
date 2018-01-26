@@ -1,6 +1,6 @@
 export default class Fixtures {
 
-    baseUrl = 'http://localhost:4001';
+    baseUrl = 'https://sheltered-atoll-65815.herokuapp.com/';
 
     
 
